@@ -3,7 +3,37 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-<title>Bloom — a word garden</title>
+<title>Blooming Words — a botanical word garden</title>
+<meta name="description" content="Trace five letters to spell words and grow an interlocking crossword garden. Press wildflowers for bonus pollen across 54 hand-grown gardens. A cyanotype word game — no download, plays in your browser."/>
+<link rel="canonical" href="https://stephenuffugus.github.io/Blooming_Words/"/>
+
+<!-- theme + icons -->
+<meta name="theme-color" content="#0d3350"/>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png"/>
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+
+<!-- installable / standalone -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Blooming Words"/>
+
+<!-- Open Graph / social -->
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Blooming Words"/>
+<meta property="og:title" content="Blooming Words — a botanical word garden"/>
+<meta property="og:description" content="Trace letters to spell words and grow an interlocking crossword garden. 54 gardens to bloom. Plays right in your browser."/>
+<meta property="og:url" content="https://stephenuffugus.github.io/Blooming_Words/"/>
+<meta property="og:image" content="https://stephenuffugus.github.io/Blooming_Words/assets/og.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="Blooming Words — a cyanotype word game with a five-petal bloom and ferns"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Blooming Words — a botanical word garden"/>
+<meta name="twitter:description" content="Trace letters to spell words and grow a crossword garden. 54 gardens to bloom."/>
+<meta name="twitter:image" content="https://stephenuffugus.github.io/Blooming_Words/assets/og.png"/>
 <!--
   ============================================================================
   BLOOM — a botanical word game (swipe-to-spell). Single self-contained file.
@@ -750,6 +780,14 @@ window.addEventListener("orientationchange",()=>setTimeout(fit,250));
   if(!game.seenIntro) openScrim("introScrim");
   requestAnimationFrame(fit);
 })();
+
+/* PWA: register the offline worker. Fully guarded — absent in jsdom/file://,
+   never blocks the game, never throws into the boot path. */
+try{
+  if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
+    window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+  }
+}catch(_){}
 </script>
 </body>
 </html>

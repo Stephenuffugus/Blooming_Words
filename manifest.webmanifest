@@ -1,0 +1,19 @@
+{
+  "name": "Blooming Words — a botanical word garden",
+  "short_name": "Blooming Words",
+  "description": "Trace five letters to spell words and grow an interlocking crossword garden across 54 hand-grown beds.",
+  "id": "/Blooming_Words/",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#08243a",
+  "theme_color": "#0d3350",
+  "categories": ["games", "word", "puzzle"],
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

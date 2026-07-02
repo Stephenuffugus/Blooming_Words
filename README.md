@@ -5,8 +5,13 @@ a ring; trace them to spell words. Board words grow an **interlocking crossword
 bed**; any other real word you find is **pressed** into your journal for bonus
 pollen. Grow all 54 gardens.
 
-**Play it:** open `index.html`. No build step, no network, no assets — every
-letter, layout, sound, and illustration is generated in the file.
+**Play it live:** https://stephenuffugus.github.io/Blooming_Words/ — or open
+`index.html` locally. No build step, no assets — every letter, layout, sound,
+and illustration is generated in the file. Installable as a PWA and playable
+offline after first load.
+
+**Deploy:** every push to `main` publishes to GitHub Pages via
+`.github/workflows/deploy.yml` (Pages source = GitHub Actions).
 
 ## How it plays
 
@@ -84,5 +89,8 @@ Serif display type from the system stack; respects `prefers-reduced-motion`.
 
 ## Roadmap
 
-Real-device visual QA pass · PWA manifest + offline worker · timed
-"golden hour" mode · achievements · portal wallet + account sync.
+Real-device visual QA pass · timed "golden hour" mode · achievements ·
+portal wallet + account sync (Lucid Winds).
+
+Shipped: ✅ localStorage persistence · ✅ PWA manifest + offline service worker
+· ✅ social/OG cards + cyanotype app icons · ✅ CI (tests) + CD (Pages).
