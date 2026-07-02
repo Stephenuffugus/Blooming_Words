@@ -133,15 +133,42 @@ content, then injects it into `index.html`.
 
 ---
 
-## Contact / notes for integration
+## Optional: completion events (embed API)
 
-- If Lucid Winds wants a **completion signal** (e.g. to award site-side points
-  when a player finishes a garden), that can be added as a `postMessage` from the
-  game to the parent frame — but per direction, the game's own pollen economy
-  stays entirely inside the game. Flag it if you want that hook and it can be
-  wired on request.
-- No analytics are included. If you want privacy-respecting analytics, add your
-  snippet to the `<head>` of `index.html`.
+If you want the site to react when a player progresses — award site-side points,
+show a toast, unlock something — the game emits **outbound `postMessage`
+events** to the parent frame. This is optional: ignore it and nothing changes.
+The game's pollen economy stays entirely internal; these events carry no
+currency and expect no response.
+
+Listen on the parent page and filter on `event.data.source`:
+
+```js
+window.addEventListener("message", (e) => {
+  const msg = e.data;
+  if (!msg || msg.source !== "blooming-words") return;   // always filter
+  // Optionally also check e.origin against the game's host.
+  switch (msg.type) {
+    case "bloom:ready":            /* game booted */ break;
+    case "bloom:garden-complete":  awardPoints(msg);  break;
+    case "bloom:all-gardens-complete": bigCelebration(); break;
+  }
+});
+```
+
+Events (`msg.protocol === 1`):
+
+| type | when | payload |
+|---|---|---|
+| `bloom:ready` | on load | `gardens`, `unlocked`, `bloomed` |
+| `bloom:garden-complete` | first time a garden is fully bloomed (fires **once** each) | `index`, `name`, `bed`, `targets`, `pressings`, `pollen`, `gardensBloomed`, `totalGardens` |
+| `bloom:all-gardens-complete` | when the final garden blooms | `gardensBloomed`, `totalGardens`, `pollen` |
+
+Notes: events post with target origin `"*"`, so **always verify
+`msg.source === "blooming-words"`** (and optionally `e.origin`). Works whether
+the game is in an iframe or hosted standalone (when standalone it simply posts
+to itself; harmless). No analytics or trackers are included — add your own
+snippet to the `<head>` of `index.html` if you want them.
 
 That's everything. Serve the folder over HTTPS (or drop in the iframe) and
 Blooming Words is live. 🌸

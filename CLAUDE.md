@@ -46,6 +46,11 @@ paint, petal bursts) · `LAYOUT FIT` (`fit()`: sizes ring + `--cell` var) ·
   `seenIntro`. `prog[i].rev` stores hint-revealed cells as `"row,col"`. If you
   change the schema *or reorder gardens* (indices shift), bump the key and
   handle/discard old blobs deliberately.
+- **Embed events** (`emit`): outbound-only, best-effort `postMessage` to the
+  parent frame (`source:"blooming-words"`, `protocol:1`). Must never affect
+  gameplay, pollen, or persistence, and must never throw. `bloom:garden-complete`
+  fires inside the once-per-garden `!p.claimed` block so it can't double-fire.
+  See HANDOFF.md for the payload table.
 - **Palette rule:** gold (`--sun`) marks *reward only* — pollen, trail,
   solves, hints, petals. Don't use it for chrome. Keep
   `prefers-reduced-motion` working.
