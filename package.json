@@ -1,0 +1,8 @@
+{
+  "name": "bloom",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Bloom — a botanical word garden. Single-file swipe-to-spell crossword game.",
+  "scripts": { "test": "node test/test.js" },
+  "devDependencies": { "jsdom": "^29.0.0" }
+}
