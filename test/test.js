@@ -1,12 +1,17 @@
 const fs=require("fs");const path=require("path");const {JSDOM}=require("jsdom");
 // Load the real index.html and inject a test hook before the BOOT banner.
 const src=fs.readFileSync(path.join(__dirname,"..","index.html"),"utf8");
-const hook='  window.__test={game,submit,useHint,LEVELS,DICT,ring,levelProg,openSun,serialize,buildGardens,fit,ui,checkAuto,maybeComplete,solveWord};\n';
+const hook='  window.__test={game,submit,useHint,LEVELS,DICT,ring,levelProg,openSun,serialize,buildGardens,fit,ui,checkAuto,maybeComplete,solveWord,emit};\n';
 const marker="/* ============================ BOOT";
 if(!src.includes(marker)) throw new Error("boot marker missing");
 const html=src.replace(marker,hook+marker);
 const mem={};const storage={async get(k){return k in mem?{key:k,value:mem[k]}:null;},async set(k,v){mem[k]=v;return{key:k,value:v};}};
-const dom=new JSDOM(html,{runScripts:"dangerously",pretendToBeVisual:true,beforeParse(w){w.storage=storage;}});
+// Capture the embed-API postMessage events (attach before scripts run to catch bloom:ready).
+const dom=new JSDOM(html,{runScripts:"dangerously",pretendToBeVisual:true,beforeParse(w){
+  w.storage=storage;
+  w.__events=[];
+  w.addEventListener("message",e=>{ if(e.data&&e.data.source==="blooming-words") w.__events.push(e.data); });
+}});
 const win=dom.window;
 let pass=0,fail=0;
 const ok=(c,m)=>{(c?pass++:fail++);console.log((c?"  ok  ":"FAIL  ")+m);};
@@ -72,6 +77,16 @@ function gridFromData(L){ // independent reconstruction from level data
   eq(D.getElementById("levelScrim").classList.contains("on"),true,"level-complete overlay");
   eq(T.game.pollen,expSolve+30,"clear bonus +30 once");
   eq(T.game.unlocked,1,"garden 2 unlocked");
+
+  // --- embed API: postMessage events to a parent frame ---
+  const ready=win.__events.find(m=>m.type==="bloom:ready");
+  ok(!!ready&&ready.gardens===T.LEVELS.length&&ready.protocol===1,"bloom:ready fired at boot with totals");
+  const gc=win.__events.find(m=>m.type==="bloom:garden-complete"&&m.index===0);
+  ok(!!gc,"bloom:garden-complete fired for garden 0");
+  eq(gc.totalGardens,T.LEVELS.length,"garden-complete carries total gardens");
+  ok(gc.gardensBloomed>=1&&gc.name===L0.name&&gc.bed===L0.bed,"garden-complete payload correct");
+  const gcCount=win.__events.filter(m=>m.type==="bloom:garden-complete"&&m.index===0).length;
+  eq(gcCount,1,"garden-complete fires once per garden (pay-once)");
 
   // --- open-ended pressing (any real 3-letter word from garden 0's letters
   //     that isn't a board target — derived so it survives content changes) ---

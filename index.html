@@ -377,6 +377,18 @@ const Sound = {
 const buzz = p => { try{ if(navigator.vibrate) navigator.vibrate(p); }catch(_){} };
 
 /* ============================ HELPERS ============================ */
+/* Optional embed API: fire namespaced events to a parent frame (e.g. the host
+   site embedding the game). Purely outbound and best-effort — it never affects
+   gameplay, never touches pollen, and no-ops when not embedded. A listener
+   should filter on `event.data.source === "blooming-words"`. Events:
+     bloom:ready              {gardens,unlocked,bloomed,protocol}
+     bloom:garden-complete    {index,name,bed,targets,pressings,pollen,gardensBloomed,totalGardens}
+     bloom:all-gardens-complete {gardensBloomed,totalGardens,pollen} */
+const EMIT_PROTOCOL = 1;
+function emit(type, detail){
+  try{ window.parent.postMessage(Object.assign({source:"blooming-words", type, protocol:EMIT_PROTOCOL}, detail||{}), "*"); }catch(_){}
+}
+function bloomedCount(){ return game.prog.reduce((n,q,j)=>n+(q&&q.solved.size===LEVELS[j].targets.length?1:0),0); }
 const $  = (s,r=document)=>r.querySelector(s);
 const el = (t,c)=>{ const e=document.createElement(t); if(c) e.className=c; return e; };
 const todayStr = ()=>{ const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; };
@@ -669,7 +681,13 @@ function openSun(){
 function completeLevel(){
   const i=game.current, L=LEVELS[i], p=levelProg(i);
   let earned=0;
-  if(!p.claimed){ p.claimed=true; earned=CONFIG.econ.levelClear; Wallet.earn(earned,"clear"); Sound.clear(); buzz([20,60,20,60,40]); }
+  if(!p.claimed){
+    p.claimed=true; earned=CONFIG.econ.levelClear; Wallet.earn(earned,"clear"); Sound.clear(); buzz([20,60,20,60,40]);
+    const bloomed=bloomedCount();
+    emit("bloom:garden-complete",{index:i, name:L.name, bed:L.bed, targets:L.targets.length,
+      pressings:p.bonus.size, pollen:game.pollen, gardensBloomed:bloomed, totalGardens:LEVELS.length});
+    if(bloomed===LEVELS.length) emit("bloom:all-gardens-complete",{gardensBloomed:bloomed, totalGardens:LEVELS.length, pollen:game.pollen});
+  }
   game.unlocked=Math.max(game.unlocked, Math.min(i+1, LEVELS.length-1)); save();
   $("#sPollen").textContent="+"+(earned||0);
   $("#sPress").textContent=p.bonus.size+"/"+ui.pressList.length;
@@ -779,6 +797,7 @@ window.addEventListener("orientationchange",()=>setTimeout(fit,250));
   ui.loadLevel(game.current);
   if(!game.seenIntro) openScrim("introScrim");
   requestAnimationFrame(fit);
+  emit("bloom:ready",{gardens:LEVELS.length, unlocked:game.unlocked, bloomed:bloomedCount()});
 })();
 
 /* PWA: register the offline worker. Fully guarded — absent in jsdom/file://,
