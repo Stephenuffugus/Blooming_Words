@@ -27,10 +27,11 @@ paint, petal bursts) · `LAYOUT FIT` (`fit()`: sizes ring + `--cell` var) ·
 
 ## Contracts and invariants
 
-- **Wallet is the only currency path.** Never mutate `game.pollen` directly
-  (exception: the reset button). To integrate a real backend, re-point
-  `Wallet.earn/spend` and keep the signatures — `spend` returns `false` on
-  insufficient funds.
+- **Wallet is the only currency path.** Pollen is the game's own, fully
+  self-contained currency — no external wallet, account, or purchase. Never
+  mutate `game.pollen` directly (exception: the reset button); all movement
+  goes through `Wallet.earn/spend`, and `spend` returns `false` on insufficient
+  funds. Keep it self-contained.
 - **Economy** lives in `CONFIG.econ` only. Rewards pay once per word/garden;
   auto-solved words pay the same as traced ones; a hint (20) always costs
   more than any single cell is worth — keep it that way. The sun streak
@@ -41,10 +42,10 @@ paint, petal bursts) · `LAYOUT FIT` (`fit()`: sizes ring + `--cell` var) ·
   by the pipeline; the renderer trusts them.
 - **DICT** is uppercased into a `Set` at boot. Pressings = in `DICT`, formable
   from the level's letters, not a target.
-- **Save schema** (`bloom.save.v3`): see README — includes `sunStreak` and
-  `seenIntro`. `prog[i].rev` stores
-  hint-revealed cells as `"row,col"`. If you change the schema, bump the key
-  and handle/discard old blobs deliberately.
+- **Save schema** (`bloom.save.v4`): see README — includes `sunStreak` and
+  `seenIntro`. `prog[i].rev` stores hint-revealed cells as `"row,col"`. If you
+  change the schema *or reorder gardens* (indices shift), bump the key and
+  handle/discard old blobs deliberately.
 - **Palette rule:** gold (`--sun`) marks *reward only* — pollen, trail,
   solves, hints, petals. Don't use it for chrome. Keep
   `prefers-reduced-motion` working.
@@ -57,24 +58,28 @@ python3 tools/gen_levels.py      # from repo root
 npm test
 ```
 
-Rebuilds targets (zipf ≥ 3.30) and the open dictionary (zipf ≥ 2.50, ENABLE
-list, profanity/fragment blocklist), computes an interlocking crossword layout
-per garden (120 seeded attempts, best score), **independently validates**
-every layout (letter consistency, connectivity, no stray adjacent words), and
-regex-injects both `const LEVELS = […];` and the `DICT` string into
-`index.html` in place. It exits nonzero rather than inject anything invalid.
-To add content, extend `ANCHORS` (anchor must be 5 distinct letters) and
-re-run.
+Rebuilds targets (zipf ≥ 3.30) and the open dictionary (`DICT_FLOOR = 0.0` — the
+complete ENABLE set of 3–5 letter, all-distinct words, minus the blocklist),
+computes an interlocking crossword layout per garden (160 seeded attempts, best
+score), **independently validates** every layout (letter consistency,
+connectivity, no stray adjacent words), and regex-injects both
+`const LEVELS = […];` and the `DICT` string into `index.html` in place.
+
+Individual gardens that can't be laid out, or have fewer than `MIN_TARGETS`
+common words, are **dropped and reported** (not fatal) — so the themed
+`ANCHORS` pool can grow freely. Beds render in the curated `BED_ORDER`
+(Blossoms → … → Weather); within a bed, gardens ramp by difficulty. To add
+content, extend `ANCHORS` (each anchor must be 5 distinct letters) and re-run.
+Duplicate letter-sets collapse to the first listed.
 
 ## Common tasks
 
 - **Tune difficulty/economy:** edit `CONFIG.econ`; the hint/auto-solve
   invariant above must hold. Tests pin exact totals — update them with intent.
-- **Ship persistence:** in `STORE`, replace `_read`/`_write` bodies with
-  `localStorage.getItem/setItem(KEY, …)` or backend calls. Everything else is
-  already async-tolerant.
-- **Portal wallet:** replace `Wallet.earn/spend` internals; keep them
-  synchronous-looking (optimistic update + reconcile is fine).
+- **Persistence** ships via `localStorage` (preferring the artifact KV when
+  present) in `STORE`'s `_read`/`_write`. Everything else is async-tolerant.
+- **Currency stays in-game.** Pollen is self-contained; there is no external
+  wallet to wire. Keep all balance changes flowing through `Wallet.earn/spend`.
 
 ## Gotchas
 

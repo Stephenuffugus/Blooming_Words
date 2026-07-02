@@ -20,47 +20,106 @@ DICT_PATH = os.path.join(HERE, "dict.txt")
 DICT_URL = "https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt"
 
 TARGET_FLOOR = 3.30      # board words: clearly common (zipf)
-DICT_FLOOR   = 2.50      # pressings dictionary: real + generous
+DICT_FLOOR   = 0.0       # pressings dictionary: the complete ENABLE 3-5 all-distinct set
 MIN_TARGETS  = 4
 HARD_COLS, HARD_ROWS = 10, 12
-SEEDS = 120
+SEEDS = 160
 
 BLOCK = set("""
-ass tit tits arse crap damn hell piss slut fag fags gook kike spic wog coon
-jap japs dago paki cum jizz turd twat wank prick dyke homo negro las los tho
-sac butt scum wop chink poon smeg pac mon mae ami
+ass tit tits arse crap damn hell piss slut sluts fag fags gook kike spic wog coon
+jap japs dago paki cum jizz turd twat wank wanks prick dyke homo negro las los tho
+sac butt scum wop chink poon smeg pac mon mae ami cock cocks dick dicks jism smut
+whore whores slag boobs spunk kkk semen coons
 """.split())
 
-# (anchor, bed, latin caption) — anchor must be 5 DISTINCT letters
+# (anchor, bed, latin caption) — anchor must be 5 DISTINCT letters.
+# The pipeline drops any anchor with <MIN_TARGETS common words, any duplicate
+# letter-set (first listed wins), and any garden whose layout won't validate.
 ANCHORS = [
+    # --- Blossoms (flowers) ---
     ("PETAL","Blossoms","corolla"), ("SEPAL","Blossoms","calyx"),
     ("TULIP","Blossoms","Tulipa"), ("PANSY","Blossoms","Viola tricolor"),
     ("PEONY","Blossoms","Paeonia"), ("DAISY","Blossoms","Bellis perennis"),
     ("VIOLA","Blossoms","Viola"), ("ASTER","Blossoms","Aster amellus"),
     ("FLORA","Blossoms","flora locale"), ("CALYX","Blossoms","calyx"),
+    ("TANSY","Blossoms","Tanacetum vulgare"), ("SEDUM","Blossoms","Sedum acre"),
+    ("PINKS","Blossoms","Dianthus"), ("STOCK","Blossoms","Matthiola incana"),
+    ("BUGLE","Blossoms","Ajuga reptans"), ("LUPIN","Blossoms","Lupinus"),
+    ("BRACT","Blossoms","bractea"), ("SPRAY","Blossoms","ramulus florens"),
+    ("CANES","Blossoms","calami"),
+    # --- Orchard (fruit) ---
     ("GRAPE","Orchard","Vitis vinifera"), ("PEACH","Orchard","Prunus persica"),
-    ("MANGO","Orchard","Mangifera"), ("LEMON","Orchard","Citrus limon"),
-    ("MELON","Orchard","Cucumis melo"), ("OLIVE","Orchard","Olea europaea"),
-    ("PECAN","Orchard","Carya illinoinensis"), ("PLUMS","Orchard","Prunus"),
-    ("PEARS","Orchard","Pyrus"), ("FRUIT","Orchard","pomum"),
+    ("MANGO","Orchard","Mangifera indica"), ("LEMON","Orchard","Citrus limon"),
+    ("OLIVE","Orchard","Olea europaea"), ("PECAN","Orchard","Carya illinoinensis"),
+    ("PLUMS","Orchard","Prunus domestica"), ("PEARS","Orchard","Pyrus communis"),
+    ("FRUIT","Orchard","pomum"), ("LIMES","Orchard","Citrus aurantiifolia"),
+    ("DATES","Orchard","Phoenix dactylifera"), ("PRUNE","Orchard","prunum"),
+    ("CIDER","Orchard","sicera"),
+    # --- Grove (trees & wood) ---
     ("MAPLE","Grove","Acer"), ("CEDAR","Grove","Cedrus libani"),
     ("BIRCH","Grove","Betula"), ("ALDER","Grove","Alnus"),
-    ("LARCH","Grove","Larix"), ("HAZEL","Grove","Corylus"),
+    ("LARCH","Grove","Larix"), ("HAZEL","Grove","Corylus avellana"),
     ("ROWAN","Grove","Sorbus aucuparia"), ("GROVE","Grove","nemus"),
     ("BOUGH","Grove","ramus"), ("BOWER","Grove","umbraculum"),
+    ("TRUNK","Grove","truncus"), ("ASPEN","Grove","Populus tremula"),
+    ("PINES","Grove","Pinus"), ("COPSE","Grove","silva caedua"),
+    ("EBONY","Grove","Diospyros"), ("CAROB","Grove","Ceratonia siliqua"),
+    ("LEAFY","Grove","frondosus"), ("ACORN","Grove","glans"),
+    # --- Kitchen (herbs & harvest) ---
     ("BASIL","Kitchen","Ocimum basilicum"), ("THYME","Kitchen","Thymus"),
     ("MINTS","Kitchen","Mentha"), ("CHARD","Kitchen","Beta vulgaris"),
     ("CLOVE","Kitchen","Syzygium aromaticum"), ("BEANS","Kitchen","Phaseolus"),
     ("GRAIN","Kitchen","granum"), ("WHEAT","Kitchen","Triticum"),
-    ("MAIZE","Kitchen","Zea mays"), ("KALES","Kitchen","Brassica oleracea"),
+    ("KALES","Kitchen","Brassica oleracea"), ("CHIVE","Kitchen","Allium schoenoprasum"),
+    ("CUMIN","Kitchen","Cuminum cyminum"), ("MINCE","Kitchen","minutal"),
+    ("BROTH","Kitchen","ius"), ("SPICE","Kitchen","aroma"),
+    ("SUGAR","Kitchen","saccharum"), ("FLOUR","Kitchen","farina"),
+    ("YEAST","Kitchen","fermentum"), ("DOUGH","Kitchen","massa"),
+    ("HONEY","Kitchen","mel"), ("SYRUP","Kitchen","sirupus"),
+    ("PESTO","Kitchen","pistum"), ("BREAD","Kitchen","panis"),
+    ("GRITS","Kitchen","polenta"), ("TUBER","Kitchen","tuber"),
+    # --- Meadow (grass & harvest field) ---
+    ("HERBS","Meadow","herba"), ("LEAFS","Meadow","frondes"),
+    ("SPRIG","Meadow","surculus"), ("GROWS","Meadow","crescit"),
+    ("GRAZE","Meadow","pascere"), ("SPELT","Meadow","Triticum spelta"),
+    ("SWATH","Meadow","ordo faeni"), ("BALES","Meadow","fasciculi"),
+    ("HAYED","Meadow","faenum"), ("MOWED","Meadow","demessus"),
+    # --- Wild (wildland & terrain) ---
     ("FROND","Wild","Pteridium"), ("FERNS","Wild","Polypodiopsida"),
-    ("THORN","Wild","inter spinas"), ("SHRUB","Wild","frutex"),
-    ("GORSE","Wild","Ulex"), ("BLADE","Wild","gramen"),
+    ("THORN","Wild","spina"), ("SHRUB","Wild","frutex"),
+    ("GORSE","Wild","Ulex europaeus"), ("BLADE","Wild","gramen"),
     ("FIELD","Wild","campus"), ("GLADE","Wild","saltus"),
     ("MARSH","Wild","palus"), ("DUNES","Wild","dunae"),
     ("TWIGS","Wild","virgae"), ("VINES","Wild","Vitis"),
     ("SPORE","Wild","spora"), ("LOTUS","Wild","Nelumbo nucifera"),
     ("PLANT","Wild","in horto"), ("STALK","Wild","caulis"),
+    ("BRAKE","Wild","filicetum"), ("RUSHY","Wild","iuncosus"),
+    ("SWAMP","Wild","palus limosa"), ("RIDGE","Wild","iugum"),
+    ("SLOPE","Wild","clivus"), ("VALES","Wild","valles"),
+    ("ROCKS","Wild","saxa"), ("STONE","Wild","lapis"),
+    ("SANDY","Wild","harenosus"), ("WILDS","Wild","ferae terrae"),
+    # --- Wetland (water's edge — algae, silt, tides; after Atkins' cyanotypes) ---
+    ("SILTY","Wetland","limosus"), ("DELTA","Wetland","ostium"),
+    ("CORAL","Wetland","corallium"), ("PEARL","Wetland","margarita"),
+    ("TIDES","Wetland","aestus"), ("WAVES","Wetland","undae"),
+    ("INLET","Wetland","aestuarium"),
+    # --- Wings (birds & flying things — Atkins pressed feathers too) ---
+    ("ROBIN","Wings","Erithacus rubecula"), ("WRENS","Wings","Troglodytes"),
+    ("FINCH","Wings","Fringilla"), ("DOVES","Wings","Columba"),
+    ("LARKS","Wings","Alauda"), ("HERON","Wings","Ardea cinerea"),
+    ("CROWS","Wings","Corvus"), ("HAWKS","Wings","Accipiter"),
+    ("MOTHS","Wings","Lepidoptera"), ("SWIFT","Wings","Apus apus"),
+    ("PLUME","Wings","penna"),
+    # --- Fauna (garden visitors) ---
+    ("SNAIL","Fauna","Helix"), ("TOADS","Fauna","Bufo"),
+    ("FROGS","Fauna","Rana"), ("NEWTS","Fauna","Triturus"),
+    ("MOLES","Fauna","Talpa"), ("VOLES","Fauna","Microtus"),
+    ("HARES","Fauna","Lepus"), ("FOXES","Fauna","Vulpes vulpes"),
+    # --- Weather (the garden's sky) ---
+    ("RAINS","Weather","pluvia"), ("FROST","Weather","pruina"),
+    ("MISTY","Weather","nebulosus"), ("CLOUD","Weather","nubes"),
+    ("STORM","Weather","tempestas"), ("WINDS","Weather","venti"),
+    ("SNOWY","Weather","nivosus"), ("GALES","Weather","procellae"),
 ]
 
 # ---------------------------------------------------------------- word data
@@ -119,9 +178,14 @@ for r in raw:
     if key in seen_sets: print("dedupe (same letters):", r["anchor"]); continue
     seen_sets.add(key); dedup.append(r)
 raw = dedup
-bed_order = sorted({r["bed"] for r in raw},
-                   key=lambda b: sum(r["diff"] for r in raw if r["bed"] == b)
-                              / sum(1 for r in raw if r["bed"] == b))
+# Curated thematic journey: open in the flower bed, work through the cultivated
+# garden, out into the wild, down to the water, then the living things, then the
+# sky. Within each bed, gardens ramp gently by difficulty. Any bed not listed
+# here is appended (so new beds never silently vanish).
+BED_ORDER = ["Blossoms", "Kitchen", "Orchard", "Grove", "Meadow",
+             "Wild", "Wetland", "Wings", "Fauna", "Weather"]
+present = {r["bed"] for r in raw}
+bed_order = [b for b in BED_ORDER if b in present] + sorted(present - set(BED_ORDER))
 raw.sort(key=lambda r: (bed_order.index(r["bed"]), r["diff"]))
 
 # ---------------------------------------------------------------- layouts
@@ -246,9 +310,13 @@ for r in raw:
                    "latin": r["cap"], "letters": r["letters"], "targets": r["targets"],
                    "gw": best["gw"], "gh": best["gh"], "pos": best["pos"]})
 
-print(f"gardens: {len(levels)}  dictionary: {len(DICT)}  layout fails: {fails}")
+print(f"gardens: {len(levels)}  dictionary: {len(DICT)}")
 if fails:
-    sys.exit("FAILED — fix anchors/targets before injecting.")
+    # A single un-layoutable anchor no longer aborts the whole build; it is simply
+    # dropped so the large themed anchor pool can grow without hand-tuning each one.
+    print(f"dropped (no valid layout in {SEEDS} seeds): {fails}")
+if len(levels) < MIN_TARGETS:
+    sys.exit("FAILED — too few gardens survived; check anchors/dict.")
 
 # ---------------------------------------------------------------- inject
 levels_js = json.dumps(levels, separators=(",", ":"))

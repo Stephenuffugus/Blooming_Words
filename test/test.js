@@ -26,7 +26,7 @@ function gridFromData(L){ // independent reconstruction from level data
   await wait(70);
   const T=win.__test, D=win.document;
   ok(T&&T.LEVELS,"internals exposed");
-  eq(T.LEVELS.length,54,"54 gardens");
+  eq(T.LEVELS.length,142,"142 gardens");
   ok(T.DICT.size>5000,`dictionary loaded (${T.DICT.size} words)`);
   eq(T.game.pollen,150,"starting pollen");
   ok(T.LEVELS.every(L=>L.pos&&L.gw&&L.gh),"every garden carries a crossword layout");
@@ -73,11 +73,15 @@ function gridFromData(L){ // independent reconstruction from level data
   eq(T.game.pollen,expSolve+30,"clear bonus +30 once");
   eq(T.game.unlocked,1,"garden 2 unlocked");
 
-  // --- open-ended pressing ---
-  ok(T.DICT.has("LIT"),"DICT has LIT");
-  const beforeP=T.game.pollen; T.submit("LIT");
+  // --- open-ended pressing (any real 3-letter word from garden 0's letters
+  //     that isn't a board target — derived so it survives content changes) ---
+  const L0set=new Set(L0.letters);
+  const press=[...T.DICT].find(w=>w.length===3 && new Set(w).size===3
+    && [...w].every(c=>L0set.has(c)) && !L0.targets.includes(w));
+  ok(!!press,`a pressing exists for garden 0 (${press})`);
+  const beforeP=T.game.pollen; T.submit(press);
   eq(T.game.pollen,beforeP+6,"pressing pays base 6");
-  ok(T.ui.pressList.includes("LIT"),"pressing in journal list");
+  ok(T.ui.pressList.includes(press),"pressing in journal list");
 
   // invalid
   const beforeBad=T.game.pollen; T.submit("ZZQ");
@@ -128,12 +132,12 @@ function gridFromData(L){ // independent reconstruction from level data
   T.buildGardens();
   ok(D.getElementById("tBloom").textContent.startsWith("1/"),"index shows 1 in bloom");
 
-  // persistence v3
+  // persistence v4
   await wait(260);
-  ok("bloom.save.v3" in mem,"saved under v3 key");
-  const saved=JSON.parse(mem["bloom.save.v3"]);
+  ok("bloom.save.v4" in mem,"saved under v4 key");
+  const saved=JSON.parse(mem["bloom.save.v4"]);
   eq(saved.unlocked,1,"unlocked persisted");
-  ok(saved.prog[0].bonus.includes("LIT"),"pressing persisted");
+  ok(saved.prog[0].bonus.includes(press),"pressing persisted");
   ok(Array.isArray(saved.prog[1].rev)&&saved.prog[1].rev.length>=1,"revealed cells persisted");
   eq(saved.seenIntro,true,"seenIntro persisted");
   ok(saved.sunStreak>=1,"sunStreak persisted");
